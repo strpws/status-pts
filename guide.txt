@@ -1,0 +1,93 @@
+
+## 1. Updated Typography Scale
+
+This updated type system bridges the layout rules from the style guide with your new sizing requirements.
+
+| Element | Font Family | Size | Weight / Style | Color Role | Notes / Context |
+| --- | --- | --- | --- | --- | --- |
+| **Title** | Lora | 20px | Bold | `#222222` | Editorial / Card Main Title |
+| **Deck** | Lora | 15px | Regular Italic | `#666666` | Editorial Subheadline / Description |
+| **Tooltip — Year** | PT Sans | 15px | Bold | `#222222` | Focus header within tooltip shell |
+| **Legend items** | PT Sans | 14px | Bold | `#333333` | Marked `aria-hidden="true"` |
+| **Tooltip — Value** | PT Sans | 14px | Bold | PTN / PTS Deep | Data readout inside hover state |
+| **Tooltip — Tag** | PT Sans | 13px | Bold | `#999999` | Contextual identifier (PTN/PTS) |
+| **Y-axis labels** | PT Sans | 12px | Bold | `#333333` | Row categories / text limits |
+| **X-axis year labels** | PT Sans | 12px | Bold | `#999999` | Timeline steps / layout anchors |
+| **Tooltip — diff pill** | PT Sans | 12px | Bold | PTN / PTS Deep | Full pill background layout (`9999px`) |
+| **Source note** | PT Sans | 12px | Regular | `#999999` | Source text; label bold (`#666666`) |
+| **50% right callout** | PT Sans | 11px | Bold | `#666666` / Active | Callout text alignments |
+
+---
+
+## 2. Core Color Palette & Data Roles
+
+> **Strict Rule:** Never swap or mix the color roles assigned to data types. Pale variants are for pill backgrounds only; Deep variants are for text resting on pale backgrounds.
+
+* **PTN (State/Negeri) Spectrum**
+* **Primary Bar / Active Accent:** `#00559A` (Blue)
+* **Row Hover Accent:** `#0062B1` (Blue Hover)
+* **Pill Text Color:** `#004A88` (Blue Deep)
+* **Pill Background Color:** `#EBF2FA` (Blue Pale)
+
+
+* **PTS (Private/Swasta) Spectrum**
+* **Primary Bar:** `#DBAA00` (Gold)
+* **Row Hover Accent:** `#E8B500` (Gold Hover)
+* **Values & Pill Text:** `#9A7800` (Gold Deep)
+* **Pill Background Color:** `#FEF6D8` (Gold Pale)
+
+
+* **Neutral UI System**
+* **Text Hierarchy:** Headline `#222222` | Dark `#333333` | Mid `#666666` | Light `#999999`
+* **Structural Layout:** Border `#DDDDDD` | Row Divider `#EFEFEF` | Track Surface `#F4F4F4` | Row Hover BG `#F5F8FC`
+* **Production Environment BG:** Must always be `#FFFFFF` in production layouts (do not use system test gray `#F0F2F5`).
+
+
+
+---
+
+## 3. Spacing & Geometric Blueprint
+
+Maintain the strict micro-spacing system to protect the infographic’s scannability:
+
+* **4px:** Gap between individual internal bar lines.
+* **5px:** Gap within a bar-line layout component; standard horizontal row padding.
+* **6px:** Space between Main Title $\rightarrow$ Deck, and Category Label $\rightarrow$ Bars.
+* **7px:** Vertical padding for Legend layouts.
+* **9px:** Vertical padding inside active chart rows.
+* **13px:** Space between Deck $\rightarrow$ Legend, and top-margin spacing for footers.
+* **14px:** Horizontal gap between separate legend items.
+* **20px–22px:** Card body padding envelope (top and side margins).
+* **Bar Constraints:** Track height is fixed at **13px**. Bar tag column is locked at **24px**. Bar value column is locked at **34px** (Right-aligned).
+
+---
+
+## 4. Animation Dynamics
+
+All state transitions must use these precise timings via `IntersectionObserver` triggered at a **20% visibility threshold** (with a `setTimeout` fallback of 250ms if required).
+
+```
+ ┌───────────────────────┐
+ │ Card Entrance         │ ───► Opacity 0 → 1 | TranslateY 6px → 0 (0.35s ease)
+ └───────────────────────┘
+ ┌───────────────────────┐
+ │ Bar Grow Performance  │ ───► Width 0 → Target% (0.82s cubic-bezier(0.16, 1, 0.3, 1))
+ └───────────────────────┘      [Stagger rule: 100ms base + (95ms × row index)]
+ ┌───────────────────────┐
+ │ Row Hover BG Swap     │ ───► Transparent → #F5F8FC (0.13s ease)
+ └───────────────────────┘
+ ┌───────────────────────┐
+ │ Diff Pill Appearance  │ ───► Opacity 0 → 1 | Scale 0.88 → 1 (0.14s ease on row hover)
+ └───────────────────────┘
+
+```
+
+---
+
+## 5. Compliance & Accessibility Engineering
+
+* **Structural Semantics:** Set the chart container wrapper to `role="list"` and individual container rows to `role="listitem"`.
+* **Screen Reader Labels:** Formulate strict descriptive tags on rows: `aria-label="{Category Label}: PTN X%, PTS Y%"`.
+* **Visual-Only Hiding:** Apply `aria-hidden="true"` to structural layout metrics like the interactive legends and hovering comparative diff-pills.
+* **Data Layout Conventions:** Percentages and difference calculations inside pills must display exactly **one decimal place**. Range expressions must leverage the correct typographic en-dash (`–`) rather than a simple hyphen (`-`).
+* **Reduced Motion:** Wrap styles inside `@media (prefers-reduced-motion: reduce)` rules to eliminate transitions entirely for users with accessibility preferences.

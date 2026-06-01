@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Status Aktivitas Perguruan Tinggi Swasta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,700;1,400&family=PT+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    /* Semantic categorical palette: main / deep (text on pale) / pale (pill bg) */
+    --c1:#2A9D8F; --c1d:#1E6F66; --c1p:#E6F4F1; /* Aktif       — teal/green  */
+    --c2:#457B9D; --c2d:#2F5870; --c2p:#E8EFF4; /* Alih Bentuk — steel blue  */
+    --c3:#E63946; --c3d:#B11E2A; --c3p:#FCE8EA; /* Tutup       — red         */
+    --c4:#E9A23B; --c4d:#B5781A; --c4p:#FBF0DC; /* Alih Kelola — amber        */
+    --c5:#8E6FC0; --c5d:#5F4690; --c5p:#EFEAF7; /* Merger      — purple       */
+    --c6:#6C757D; --c6d:#495057; --c6p:#ECEEF0; /* Pembinaan   — slate        */
+
+    /* Neutral */
+    --ink:#222222; --dark:#333333; --mid:#666666; --light:#999999;
+    --border:#DDDDDD; --divider:#EFEFEF; --track:#F1F1F1; --row-hover:#F6F7F8;
+    --bg:#FFFFFF;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);}
+  body{
+    font-family:'PT Sans',Arial,sans-serif;
+    color:var(--dark);
+    display:flex;
+    justify-content:center;
+    padding:24px 12px;
+  }
+
+  .card{
+    background:var(--bg);
+    width:100%;
+    min-width:640px;
+    max-width:1080px;
+    aspect-ratio:1/1;
+    padding:22px 22px 20px;
+    display:flex;
+    flex-direction:column;
+    opacity:0;
+    transform:translateY(6px);
+  }
+  .card.enter{
+    opacity:1;
+    transform:translateY(0);
+    transition:opacity .35s ease, transform .35s ease;
+  }
+
+  /* ---------- Header ---------- */
+  .title{
+    font-family:'Lora',Georgia,serif;
+    font-weight:700;font-size:20px;line-height:1.25;
+    color:var(--ink);margin:0;
+  }
+  .deck{
+    font-family:'Lora',Georgia,serif;
+    font-style:italic;font-weight:400;font-size:15px;line-height:1.5;
+    color:var(--mid);margin:6px 0 0;
+  }
+
+  /* ---------- Donut ---------- */
+  .donut-wrap{
+    flex:1 1 auto;
+    margin-top:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    min-height:0;
+  }
+  .donut{
+    position:relative;
+    width:min(80%, 460px);
+    aspect-ratio:1/1;
+  }
+  .donut svg{width:100%;height:100%;display:block;transform:rotate(-90deg);}
+  .arc{
+    fill:none;
+    stroke-width:15;
+    stroke-linecap:butt;
+    pointer-events:stroke;
+    cursor:pointer;
+    transition:stroke-dashoffset .82s cubic-bezier(.16,1,.3,1),
+               opacity .15s ease, stroke-width .15s ease;
+  }
+  .arc.dim{opacity:.28;}
+  .arc.active{stroke-width:18;}
+
+  /* Center readout (acts as focus/tooltip area) */
+  .hub{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    pointer-events:none;
+    padding:0 14%;
+  }
+  .hub-name{
+    font-size:15px;font-weight:700;color:var(--ink);
+    line-height:1.2;letter-spacing:.2px;
+  }
+  .hub-num{
+    font-family:'Lora',Georgia,serif;font-weight:700;
+    font-size:34px;line-height:1.05;color:var(--ink);
+    letter-spacing:-.5px;margin-top:3px;
+  }
+  .hub-sub{font-size:12px;font-weight:700;color:var(--light);margin-top:3px;
+    text-transform:uppercase;letter-spacing:.4px;}
+  .hub-pill{
+    display:inline-block;font-size:13px;font-weight:700;
+    border-radius:9999px;padding:2px 11px;margin-top:7px;
+    opacity:0;transform:scale(.88);
+    transition:opacity .14s ease, transform .14s ease;
+  }
+  .hub-pill.show{opacity:1;transform:scale(1);}
+
+  /* ---------- Legend as mini bar chart ---------- */
+  .legend{
+    list-style:none;margin:0;padding:0;
+    display:flex;flex-direction:column;
+  }
+  .row{
+    padding:9px 10px;border-radius:8px;
+    border-bottom:1px solid var(--divider);
+    background:transparent;cursor:pointer;
+    transition:background .13s ease, opacity .13s ease;
+  }
+  .row:last-child{border-bottom:none;}
+  .row.active{background:var(--row-hover);}
+  .row.dim{opacity:.4;}
+
+  .row-top{
+    display:flex;align-items:baseline;gap:7px;
+    margin-bottom:6px;
+  }
+  .swatch{width:12px;height:12px;border-radius:3px;flex:none;align-self:center;}
+  .row-name{font-size:14px;font-weight:700;color:var(--dark);white-space:nowrap;}
+  .row-sub{font-size:12px;font-weight:400;color:var(--light);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto;}
+  .row-pct{font-size:14px;font-weight:700;margin-left:auto;flex:none;}
+  .row-count{font-size:12px;font-weight:700;color:var(--mid);flex:none;
+    min-width:34px;text-align:right;}
+
+  .bar-track{
+    height:10px;border-radius:9999px;
+    background:var(--track);overflow:hidden;
+  }
+  .bar-fill{
+    height:100%;border-radius:9999px;
+    width:0;min-width:3px;
+    transition:width .82s cubic-bezier(.16,1,.3,1), filter .15s ease;
+  }
+  .row.active .bar-fill{filter:brightness(1.06);}
+
+  /* ---------- Footer ---------- */
+  .source{margin-top:13px;font-size:12px;font-weight:400;color:var(--light);line-height:1.5;}
+  .source b{color:var(--mid);font-weight:700;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+    .card{opacity:1;transform:none;}
+    .hub-pill{opacity:1;transform:none;}
+  }
+</style>
+</head>
+<body>
+  <main class="card" id="card">
+    <h1 class="title">Status Aktivitas Perguruan Tinggi Swasta</h1>
+    <p class="deck">Dari 3.684 perguruan tinggi swasta (PTS) yang tercatat, 71 persen di antaranya masih aktif. Namun, hampir satu dari lima kampus telah beralih bentuk, sementara 257 lainnya tutup.</p>
+
+    <div class="donut-wrap">
+      <div class="donut">
+        <svg viewBox="0 0 100 100" id="svg" role="img"
+             aria-label="Komposisi status 3.684 PTS: Aktif 71,1 persen, Alih Bentuk 20,5 persen, Tutup 7,0 persen, Alih Kelola 0,9 persen, Merger 0,4 persen, Pembinaan 0,1 persen.">
+          <circle cx="50" cy="50" r="42" fill="none" stroke="var(--track)" stroke-width="15"></circle>
+        </svg>
+        <div class="hub" id="hub" aria-hidden="true">
+          <div class="hub-name" id="hubName">Total</div>
+          <div class="hub-num" id="hubNum">3.684</div>
+          <div class="hub-sub" id="hubSub">PTS tercatat</div>
+          <span class="hub-pill" id="hubPill"></span>
+        </div>
+      </div>
+    </div>
+
+    <ul class="legend" id="legend" role="list"></ul>
+
+    <p class="source"><b>Sumber:</b> Pangkalan Data Dikti, Mei 2026 • <b>Diolah:</b> Kompas/EKI/FAI/SPW</p>
+  </main>
+
+<script>
+(function(){
+  "use strict";
+
+  var TOTAL = 3684;
+  var R = 42, C = 2 * Math.PI * R; // circumference
+
+  var DATA = [
+    {name:"Aktif",       count:2621, color:"#2A9D8F", deep:"#1E6F66", pale:"#E6F4F1", note:"Beroperasi normal"},
+    {name:"Alih Bentuk", count:756,  color:"#457B9D", deep:"#2F5870", pale:"#E8EFF4", note:"Berubah bentuk kelembagaan"},
+    {name:"Tutup",       count:257,  color:"#E63946", deep:"#B11E2A", pale:"#FCE8EA", note:"Tidak lagi beroperasi"},
+    {name:"Alih Kelola", count:34,   color:"#E9A23B", deep:"#B5781A", pale:"#FBF0DC", note:"Berganti badan pengelola"},
+    {name:"Merger",      count:14,   color:"#8E6FC0", deep:"#5F4690", pale:"#EFEAF7", note:"Bergabung dengan kampus lain"},
+    {name:"Pembinaan",   count:2,    color:"#6C757D", deep:"#495057", pale:"#ECEEF0", note:"Berstatus pembinaan"}
+  ];
+
+  function pct(c){ return c / TOTAL * 100; }
+  function fmtPct(c){ return pct(c).toFixed(1).replace(".", ",") + "%"; }
+  function fmtNum(n){ return n.toLocaleString("id-ID"); }
+
+  var svg    = document.getElementById("svg");
+  var legend = document.getElementById("legend");
+  var hub     = document.getElementById("hub");
+  var hubName = document.getElementById("hubName");
+  var hubNum  = document.getElementById("hubNum");
+  var hubSub  = document.getElementById("hubSub");
+  var hubPill = document.getElementById("hubPill");
+  var SVGNS = "http://www.w3.org/2000/svg";
+
+  var arcs = [], rows = [];
+  var cum = 0; // cumulative fraction
+
+  DATA.forEach(function(d, i){
+    var frac = d.count / TOTAL;
+    var raw  = frac * C;
+    var gap  = raw > 4 ? 1.4 : 0;          // visual separation for larger arcs
+    var len  = Math.max(raw - gap, 0.9);   // keep tiny slices visible
+
+    var arc = document.createElementNS(SVGNS, "circle");
+    arc.setAttribute("class", "arc");
+    arc.setAttribute("cx", 50);
+    arc.setAttribute("cy", 50);
+    arc.setAttribute("r", R);
+    arc.setAttribute("stroke", d.color);
+    arc.setAttribute("stroke-dasharray", len + " " + (C - len));
+    arc.setAttribute("stroke-dashoffset", len); // hidden initially (grows on play)
+    arc.style.transform = "rotate(" + (cum * 360) + "deg)";
+    arc.style.transformOrigin = "50% 50%";
+    arc.style.transitionDelay = (100 + 95 * i) + "ms";
+    arc.dataset.i = i;
+    arc.dataset.len = len;
+    arc.setAttribute("aria-hidden", "true");
+    svg.appendChild(arc);
+    arcs.push(arc);
+
+    cum += frac;
+
+    var li = document.createElement("li");
+    li.className = "row";
+    li.setAttribute("role", "listitem");
+    li.dataset.i = i;
+    li.setAttribute("aria-label", d.name + ": " + fmtNum(d.count) + " PTS, " + fmtPct(d.count));
+    li.innerHTML =
+      '<div class="row-top">' +
+        '<span class="swatch" style="background:'+d.color+'" aria-hidden="true"></span>' +
+        '<span class="row-name">'+d.name+'</span>' +
+        '<span class="row-sub">'+d.note+'</span>' +
+        '<span class="row-pct" style="color:'+d.deep+'">'+fmtPct(d.count)+'</span>' +
+        '<span class="row-count">'+fmtNum(d.count)+'</span>' +
+      '</div>' +
+      '<div class="bar-track" aria-hidden="true">' +
+        '<div class="bar-fill" style="background:'+d.color+';transition-delay:'+(100+95*i)+'ms"></div>' +
+      '</div>';
+    legend.appendChild(li);
+    li._fill = li.querySelector(".bar-fill");
+    li._target = pct(d.count);
+    rows.push(li);
+  });
+
+  function focusCat(i){
+    var d = DATA[i];
+    arcs.forEach(function(a,k){ a.classList.toggle("active",k===i); a.classList.toggle("dim",k!==i); });
+    rows.forEach(function(r,k){ r.classList.toggle("active",k===i); r.classList.toggle("dim",k!==i); });
+    hubName.textContent = d.name;
+    hubName.style.color = d.deep;
+    hubNum.textContent = fmtNum(d.count);
+    hubSub.textContent = "PTS";
+    hubPill.textContent = fmtPct(d.count);
+    hubPill.style.background = d.pale;
+    hubPill.style.color = d.deep;
+    hubPill.classList.add("show");
+  }
+  function resetHub(){
+    arcs.forEach(function(a){ a.classList.remove("active","dim"); });
+    rows.forEach(function(r){ r.classList.remove("active","dim"); });
+    hubName.textContent = "Total"; hubName.style.color = "";
+    hubNum.textContent = "3.684";
+    hubSub.textContent = "PTS tercatat";
+    hubPill.classList.remove("show");
+  }
+
+  function bind(el, i){
+    el.addEventListener("mouseenter", function(){ focusCat(i); });
+    el.addEventListener("mouseleave", resetHub);
+  }
+  arcs.forEach(bind);
+  rows.forEach(bind);
+
+  // ---- Entrance + arc-draw animation ----
+  var card = document.getElementById("card");
+  var fired = false;
+  function play(){
+    if(fired) return; fired = true;
+    card.classList.add("enter");
+    requestAnimationFrame(function(){
+      arcs.forEach(function(a){ a.setAttribute("stroke-dashoffset", 0); });
+      rows.forEach(function(r){ r._fill.style.width = r._target + "%"; });
+    });
+  }
+
+  if("IntersectionObserver" in window){
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ play(); io.disconnect(); } });
+    }, {threshold:0.2});
+    io.observe(card);
+    setTimeout(play, 250); // fallback
+  } else {
+    setTimeout(play, 250);
+  }
+})();
+</script>
+</body>
+</html>
